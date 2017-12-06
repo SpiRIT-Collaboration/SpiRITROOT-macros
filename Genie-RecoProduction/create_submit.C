@@ -65,50 +65,48 @@ void GetParameters(Int_t run, Int_t &numTotal, TString &GCData, TString &GGData)
   file.close();
 }
 
-void create_submit(Int_t start = 2900, Int_t end = 2905)
+void create_submit(Int_t run = 2900)
 { 
-  for (Int_t run = start; run <= end; run++) {
-    Int_t numSplit = 2000; // Fix me if you want to change the event number in a split
-    Int_t numTotal = 0;
-    TString GCData, GGData;
-    GetParameters(run, numTotal, GCData, GGData);
-    if (numTotal == 0) 
-      continue;
+  Int_t numSplit = 2000; // Fix me if you want to change the event number in a split
+  Int_t numTotal = 0;
+  TString GCData, GGData;
+  GetParameters(run, numTotal, GCData, GGData);
+  if (numTotal == 0) 
+    continue;
 
-    Int_t mjs = (numTotal/3+1)/numSplit;
+  Int_t mjs = (numTotal/3+1)/numSplit;
 
-    TString version = ".";
-    TString fileName = Form("submit/r%d",run) + version + "sh";
-    TString spiritrootDIR = "/mnt/spirit/analysis/changj/SpiRITROOT.latest"; // Fix me
-    ofstream out(fileName);
+  TString version = ".";
+  TString fileName = Form("submit/r%d",run) + version + "sh";
+  TString spiritrootDIR = "/mnt/spirit/analysis/changj/SpiRITROOT.latest"; // Fix me
+  ofstream out(fileName);
 
-    // This preamble is for ember.compute. This should be modified for your system. Fix me
-    out << "#!/usr/bin/env bash" << endl;
-    out << "#--- sbatch option ---#" << endl;
-    out << "#SBATCH --ntasks=1" << endl;
-    out << "#SBATCH --cpus-per-task=8" << endl;
-    out << "#SBATCH --mem-per-cpu=2000" << endl;
-    out << Form("#SBATCH --array=0-%d", mjs) << endl; 
-    out << endl;
-    // Up to here
+  // This preamble is for ember.compute. This should be modified for your system. Fix me
+  out << "#!/usr/bin/env bash" << endl;
+  out << "#--- sbatch option ---#" << endl;
+  out << "#SBATCH --ntasks=1" << endl;
+  out << "#SBATCH --cpus-per-task=8" << endl;
+  out << "#SBATCH --mem-per-cpu=2000" << endl;
+  out << Form("#SBATCH --array=0-%d", mjs) << endl; 
+  out << endl;
+  // Up to here
 
-    out << "source " + spiritrootDir + "/build/config.sh" << endl;
-    out << "cd " + spiritrootDir + "/macros/" << endl; 
-    out << endl;
-    out << Form("RUN=%d", run) << endl;
-    out << Form("NTOTAL=%d", numTotal) << endl;
-    out << Form("NSPLIT=%d", numSplit) << endl; 
-    out << "GCData=" << GCData << endl;
-    out << "GGData=" << GGData << endl;
-    out << endl;
-    // You must replace "SLURM_ARRAY_TASK" into some variable in your system. Fix me
-    out << "SPLIT=$((3*SLURM_ARRAY_TASK_ID+0)); root run_reco_experiment.C\\($RUN,$NTOTAL,$SPLIT,$NSPLIT,\\\"$GCData\\\",\\\"$GGData\\\"\\) -b -q -l > log/log_run$RUN\\_$SPLIT.log 2>&1 &" << endl;
-    out << "SPLIT=$((3*SLURM_ARRAY_TASK_ID+1)); root run_reco_experiment.C\\($RUN,$NTOTAL,$SPLIT,$NSPLIT,\\\"$GCData\\\",\\\"$GGData\\\"\\) -b -q -l > log/log_run$RUN\\_$SPLIT.log 2>&1 &" << endl;
-    out << "SPLIT=$((3*SLURM_ARRAY_TASK_ID+2)); root run_reco_experiment.C\\($RUN,$NTOTAL,$SPLIT,$NSPLIT,\\\"$GCData\\\",\\\"$GGData\\\"\\) -b -q -l > log/log_run$RUN\\_$SPLIT.log 2>&1 &" << endl;
-    out << endl;
-    out << "wait" << endl;
+  out << "source " + spiritrootDir + "/build/config.sh" << endl;
+  out << "cd " + spiritrootDir + "/macros/" << endl; 
+  out << endl;
+  out << Form("RUN=%d", run) << endl;
+  out << Form("NTOTAL=%d", numTotal) << endl;
+  out << Form("NSPLIT=%d", numSplit) << endl; 
+  out << "GCData=" << GCData << endl;
+  out << "GGData=" << GGData << endl;
+  out << endl;
+  // You must replace "SLURM_ARRAY_TASK" into some variable in your system. Fix me
+  out << "SPLIT=$((3*SLURM_ARRAY_TASK_ID+0)); root run_reco_experiment.C\\($RUN,$NTOTAL,$SPLIT,$NSPLIT,\\\"$GCData\\\",\\\"$GGData\\\"\\) -b -q -l > log/log_run$RUN\\_$SPLIT.log 2>&1 &" << endl;
+  out << "SPLIT=$((3*SLURM_ARRAY_TASK_ID+1)); root run_reco_experiment.C\\($RUN,$NTOTAL,$SPLIT,$NSPLIT,\\\"$GCData\\\",\\\"$GGData\\\"\\) -b -q -l > log/log_run$RUN\\_$SPLIT.log 2>&1 &" << endl;
+  out << "SPLIT=$((3*SLURM_ARRAY_TASK_ID+2)); root run_reco_experiment.C\\($RUN,$NTOTAL,$SPLIT,$NSPLIT,\\\"$GCData\\\",\\\"$GGData\\\"\\) -b -q -l > log/log_run$RUN\\_$SPLIT.log 2>&1 &" << endl;
+  out << endl;
+  out << "wait" << endl;
 
-    cout << fileName << " " << numTotal << " " << GCData << " " << GGData << endl;
-    out.close();
-  }
+  cout << fileName << " " << numTotal << " " << GCData << " " << GGData << endl;
+  out.close();
 }
